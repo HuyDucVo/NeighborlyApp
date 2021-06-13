@@ -1,0 +1,195 @@
+data:
+  FUNCTIONS_WORKER_RUNTIME: cHl0aG9u
+apiVersion: v1
+kind: Secret
+metadata:
+  name: neighborlyappk8
+---
+data:
+  host.master: eHpjbWEzU2c4Zm16RW5Lb2MxMlRPMzNKWmM0OThaQ3hRb1ZNc204OE5tdTRRYy9vOWtGWnlRPT0=
+  host.function.default: dGo3VWZ6QmFyTzgyQlpYdUJKcHhqVUFwZUJ0V0FvOUx2dWZubmp5S1kwd0txa1YwYkpjU2dBPT0=
+  host.systemKey.default: N0dNV3VoRkhOa2xHaW1ZQUFzM3Z4YThjMVYvcExTdjNsaXBoTWE3YmgvL2FtVGhWOEtUamF3PT0=
+  functions.createadvertisement.default: YVJKMVRTNXdhaWowRkZVcXRTU3J6SmNBUHEyYzZiZkRwbTJjSlE2MnVzeXFFV0NwUnVzak9nPT0=
+  functions.deleteadvertisement.default: Z1BaNWNjd3pCbDVSLzlURkE5eHU3ZUlPNHNYRG9RNTNSTWJUS3IwZXpiZktGdUhlMGdsUUhRPT0=
+  functions.getadvertisement.default: WE5PUGs3WnJCQmJUaVVMdktIcGtMV3UxblVBV2F4T2cvYWFXRDhhVmRUQ1VsRnRkNGFGSFRBPT0=
+  functions.getadvertisements.default: RzlHcUZ1eG4zSVVHZ21rOFl3VDJBR3czdkRIZ3N0elFHYjJ0UFhqbEU2Ti9Oa3NKZDBFMHNBPT0=
+  functions.getpost.default: S1h0dXVGZ2tFakl6alRkbTNyNlJaSFVjSUVmTVI4T2p2c0daNmE3VjRMY3psMjFBbE5VMnBBPT0=
+  functions.getposts.default: RUZiTkRxOThOek9MTU4wQS9NeTI0djJsRVRRQzR6M1NPSk1wVXZveXNaUmFYaFY0S3JoZlFBPT0=
+  functions.updateadvertisement.default: MC9Vb2lHY2ZxSlhISWZONmdGM01YWmJDQlR1NUVCdG5ZL295RVlxeDFNT1owTk85bW9SdmxRPT0=
+apiVersion: v1
+kind: Secret
+metadata:
+  name: func-keys-kube-secret-neighborlyappk8
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: neighborlyappk8-function-keys-identity-svc-act
+---
+rules:
+- apiGroups:
+  - ''
+  resources:
+  - secrets
+  - configMaps
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+  - delete
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: functions-keys-manager-role
+---
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: functions-keys-manager-role
+subjects:
+- kind: ServiceAccount
+  name: neighborlyappk8-function-keys-identity-svc-act
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: neighborlyappk8-function-keys-identity-svc-act-functions-keys-manager-rolebinding
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: neighborlyappk8-http
+spec:
+  selector:
+    app: neighborlyappk8-http
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 80
+  type: LoadBalancer
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: neighborlyappk8-http
+  labels:
+    app: neighborlyappk8-http
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: neighborlyappk8-http
+  template:
+    metadata:
+      labels:
+        app: neighborlyappk8-http
+    spec:
+      containers:
+      - name: neighborlyappk8-http
+        image: neighborlyappdocker.azurecr.io/neighborly-app-docker:v1
+        ports:
+        - containerPort: 80
+        env:
+        - name: AzureFunctionsJobHost__functions__0
+          value: createAdvertisement
+        - name: AzureFunctionsJobHost__functions__1
+          value: deleteAdvertisement
+        - name: AzureFunctionsJobHost__functions__2
+          value: getAdvertisement
+        - name: AzureFunctionsJobHost__functions__3
+          value: getAdvertisements
+        - name: AzureFunctionsJobHost__functions__4
+          value: getPost
+        - name: AzureFunctionsJobHost__functions__5
+          value: getPosts
+        - name: AzureFunctionsJobHost__functions__6
+          value: updateAdvertisement
+        - name: AzureWebJobsSecretStorageType
+          value: kubernetes
+        - name: AzureWebJobsKubernetesSecretName
+          value: secrets/func-keys-kube-secret-neighborlyappk8
+        envFrom:
+        - secretRef:
+            name: neighborlyappk8
+        readinessProbe:
+          failureThreshold: 3
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 240
+          httpGet:
+            path: /
+            port: 80
+            scheme: HTTP
+        startupProbe:
+          failureThreshold: 3
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 240
+          httpGet:
+            path: /
+            port: 80
+            scheme: HTTP
+      serviceAccountName: neighborlyappk8-function-keys-identity-svc-act
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: neighborlyappk8
+  labels:
+    app: neighborlyappk8
+spec:
+  selector:
+    matchLabels:
+      app: neighborlyappk8
+  template:
+    metadata:
+      labels:
+        app: neighborlyappk8
+    spec:
+      containers:
+      - name: neighborlyappk8
+        image: neighborlyappdocker.azurecr.io/neighborly-app-docker:v1
+        env:
+        - name: AzureFunctionsJobHost__functions__0
+          value: eventHubTrigger
+        envFrom:
+        - secretRef:
+            name: neighborlyappk8
+        readinessProbe:
+          failureThreshold: 3
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 240
+          httpGet:
+            path: /
+            port: 80
+            scheme: HTTP
+        startupProbe:
+          failureThreshold: 3
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 240
+          httpGet:
+            path: /
+            port: 80
+            scheme: HTTP
+      serviceAccountName: neighborlyappk8-function-keys-identity-svc-act
+---
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: neighborlyappk8
+  labels: {}
+spec:
+  scaleTargetRef:
+    name: neighborlyappk8
+  triggers:
+  - type: eventgridtrigger
+    metadata:
+      direction: in
+      eventHubName: testhub
+      connection: Endpoint=sb://udacityneighborly.servicebus.windows.net/;SharedAccessKeyName=allpolicy;SharedAccessKey=LOxUOkN13xN038T1VoSsmaTt4s7vq/+VCzduS5/nH9A=;EntityPath=testhub
+---
+
