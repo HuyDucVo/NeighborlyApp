@@ -25,7 +25,7 @@ The following **technical** specification are implemented:
 
 ## Architecture
 <p align="center">
-<img src="/images/neighborly_app.jpg" width="500px">
+<img src="/images/neighborly_app (1).jpg" width="500px">
 </p>
 
 ## Screenshots
