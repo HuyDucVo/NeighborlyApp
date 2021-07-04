@@ -23,6 +23,11 @@ The following **technical** specification are implemented:
 - [x] Azure Event Hubs Monitoring
 - [x] Azure Logic App Notification
 
+## Architecture
+<p align="center">
+<img src="/images/neighborly_app.jpg" width="500px">
+</p>
+
 ## Screenshots
 <p align="center">
 <img src="/images/1.1.1 the database & collections .png" width="500px">
